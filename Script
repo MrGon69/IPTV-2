@@ -1,53 +1,34 @@
 #!/usr/bin/env python3
 """
-Production-grade M3U generator for khandai1.link
-Fetches live/scheduled matches via public API and emits valid M3U playlist.
+M3U generator with tvg-logo (team logos) for TiviMate / OTT Navigator / IPTV Smarters
+Logo attribute = full absolute URL → app renders channel icon like screenshot
 """
+import json, urllib.request
 
-import json
-import urllib.request
-from datetime import datetime, timezone
-from typing import List, Dict, Any
+API = "https://khandai1.link/api/matches/?ordering=smart&page_size=100"
+BASE = "https://khandai1.link"
+req = urllib.request.Request(API, headers={"User-Agent": "Mozilla/5.0"})
+with urllib.request.urlopen(req, timeout=12) as r:
+    data = json.loads(r.read())
 
-API_URL = "https://khandai1.link/api/matches/?ordering=smart&page_size=50"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-    "Accept": "application/json",
-}
-
-def fetch_matches() -> List[Dict[str, Any]]:
-    req = urllib.request.Request(API_URL, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        data = json.loads(resp.read().decode())
-    return data.get("results", [])
-
-def build_m3u(matches: List[Dict[str, Any]]) -> str:
-    lines = ["#EXTM3U"]
-    for m in matches:
-        status = m.get("status", "")
-        sport = m.get("sport_name", "Sport")
-        home = m.get("home_team_name", "Home")
-        away = m.get("away_team_name", "Away")
-        score = f"{m.get('home_score', 0)}-{m.get('away_score', 0)}"
-        tournament = m.get("tournament_name", "")
-        for c in m.get("commentators", []):
-            stream = c.get("stream_url") or c.get("backup_stream_url")
-            if not stream:
-                continue
-            name = c.get("name", "BLV")
-            live_tag = "Live" if c.get("is_live") or status == "live" else "Scheduled"
-            title = f"{name} | {home} {score} {away} ({tournament}) [{live_tag}]"
-            group = f"{sport} {live_tag}"
-            lines.append(
-                f'#EXTINF:-1 tvg-id="{c.get("slug", "")}" '
-                f'tvg-name="{title}" group-title="{group}",{title}'
-            )
-            lines.append(stream)
-    return "\n".join(lines)
-
-if __name__ == "__main__":
-    matches = fetch_matches()
-    playlist = build_m3u(matches)
-    print(playlist)
-    with open("khandai1.m3u", "w", encoding="utf-8") as f:
-        f.write(playlist)
+seen = set()
+print("#EXTM3U")
+for m in data.get("results", []):
+    home = m.get("home_team_name", "")
+    away = m.get("away_team_name", "")
+    score = f"{m.get('home_score',0)}-{m.get('away_score',0)}"
+    sport = m.get("sport_name", "Sport")
+    status = m.get("status", "")
+    logo_path = m.get("home_team_logo") or m.get("away_team_logo") or ""
+    logo = (BASE + logo_path) if logo_path.startswith("/") else logo_path
+    for c in m.get("commentators", []):
+        url = c.get("stream_url") or c.get("backup_stream_url")
+        if not url or "m3u8" not in url or url in seen:
+            continue
+        seen.add(url)
+        name = c.get("name", "BLV")
+        live = "Live" if (c.get("is_live") or status == "live") else "Scheduled"
+        title = f"{name} | {home} {score} {away}"
+        logo_attr = f' tvg-logo="{logo}"' if logo else ""
+        print(f'#EXTINF:-1 tvg-id="{c.get("slug","")}" tvg-name="{title}"{logo_attr} group-title="{sport} {live}",{title}')
+        print(url)
