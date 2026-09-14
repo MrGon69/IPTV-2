@@ -1,17 +1,111 @@
-#EXTM3U
-#EXTINF:-1 tvg-id="tieu-may" tvg-name="Tiểu Mây | Verdy 0-0 Chiba" tvg-logo="https://khandai1.link/media/teams/logos/team_5088.jpg" group-title="Bóng đá Live",Tiểu Mây | Verdy 0-0 Chiba
-https://luong.phaohoa.live/live/phaohoa9/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
-#EXTINF:-1 tvg-id="phao-thu" tvg-name="Pháo Thủ | Hoàng Anh Gia Lai 0-0 Hải Phòng" tvg-logo="https://khandai1.link/media/teams/logos/Hoàng_Anh_Gia_Lai_FC.png" group-title="Bóng đá Live",Pháo Thủ | Hoàng Anh Gia Lai 0-0 Hải Phòng
-https://luong.phaohoa.live/live/phaohoa4/index.m3u8?expire=1815505159&sign=faaa23580764370ed378ecd708c9f262
-#EXTINF:-1 tvg-id="van-minh" tvg-name="Văn Minh | Excelsior 0-0 Utrecht" tvg-logo="https://khandai1.link/media/teams/logos/team_5459.jpg" group-title="Bóng đá Live",Văn Minh | Excelsior 0-0 Utrecht
-https://luong.phaohoa.live/live/phaohoa3/index.m3u8?expire=1815505159&sign=32dbf97946c3646cdd7f664aebd7fa2a
-#EXTINF:-1 tvg-id="kaka" tvg-name="KaKa | Nhật Bản 0-0 Iran" tvg-logo="https://khandai1.link/media/teams/logos/OIP_4xNC98N.jpg" group-title="Bóng chuyền Live",KaKa | Nhật Bản 0-0 Iran
-https://luong.phaohoa.live/live/phaohoa6/index.m3u8?expire=1815505159&sign=16059952b038cc8982ab6d1980711dc9
-#EXTINF:-1 tvg-id="chim-nho" tvg-name="Chim Nhỏ | Rangers 0-0 Celtic" tvg-logo="https://khandai1.link/media/teams/logos/team_146.jpg" group-title="Bóng đá Scheduled",Chim Nhỏ | Rangers 0-0 Celtic
-https://luong.phaohoa.live/live/phaohoa5/index.m3u8?expire=1815505159&sign=67cc5bcdcabb081229f5406e5b07483d
-#EXTINF:-1 tvg-id="tay" tvg-name="Tày | Hồng Lĩnh Hà Tĩnh 0-0 Bình Phước" tvg-logo="https://khandai1.link/media/teams/logos/logo-clb-hong-linh-ha-tinh-1-930x1024.png" group-title="Bóng đá Scheduled",Tày | Hồng Lĩnh Hà Tĩnh 0-0 Bình Phước
-https://luong.phaohoa.live/live/phaohoa8/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
-#EXTINF:-1 tvg-id="nguoi-kien" tvg-name="Người Kiến | Lecce 0-0 Monza" tvg-logo="https://khandai1.link/media/teams/logos/team_5010.jpg" group-title="Bóng đá Scheduled",Người Kiến | Lecce 0-0 Monza
-https://luong.phaohoa.live/live/phaohoa1/index.m3u8?expire=1815505159&sign=9137553faeae361734eec8bda5ea16e2
-#EXTINF:-1 tvg-id="nha-dai-1" tvg-name="Nhà Đài | Phần Lan 0-0 Serbia" tvg-logo="https://khandai1.link/media/teams/logos/pngtree-finland-flag-pin-badge-png-image_6333890.png" group-title="Bóng chuyền Scheduled",Nhà Đài | Phần Lan 0-0 Serbia
-https://luong.phaohoa.live/live/phaohoa10/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
+#!/usr/bin/env python3
+"""
+khandai1.link M3U Generator - Production grade
+Auto-updates matches, names, logos from public API
+Output: khandai1.m3u (compatible IPTV Smarters / TiviMate / VLC / OTT Navigator)
+"""
+
+import json
+import urllib.request
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+API_BASE = "https://khandai1.link"
+API_MATCHES = f"{API_BASE}/api/matches/"
+OUTPUT = Path("khandai1.m3u")
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+TZ = timezone(timedelta(hours=7))  # +07
+
+def fetch(url: str) -> dict:
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.loads(r.read().decode())
+
+def abs_logo(path: str | None) -> str:
+    if not path:
+        return ""
+    if path.startswith("http"):
+        return path
+    return f"{API_BASE}{path}"
+
+def format_time(iso: str) -> str:
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(TZ)
+        return dt.strftime("%H:%M %d/%m")
+    except Exception:
+        return ""
+
+def build_extinf(match: dict) -> str:
+    home = match.get("home_team_name") or "Home"
+    away = match.get("away_team_name") or "Away"
+    tour = match.get("tournament_name") or "Khác"
+    status = match.get("status") or ""
+    t = format_time(match.get("start_time") or "")
+    logo = abs_logo(match.get("home_team_logo") or match.get("away_team_logo") or match.get("tournament_icon_url"))
+    title = f"[{t}] {home} vs {away}"
+    if status == "live":
+        title = f"🔴 LIVE {title}"
+    elif status == "finished":
+        hs = match.get("home_score", 0)
+        as_ = match.get("away_score", 0)
+        title = f"FT {home} {hs}-{as_} {away}"
+    group = f"Khandai|{tour}"
+    return (
+        f'#EXTINF:-1 tvg-id="{match.get("id")}" '
+        f'tvg-name="{title}" '
+        f'tvg-logo="{logo}" '
+        f'group-title="{group}",{title}'
+    )
+
+def collect_matches() -> list[dict]:
+    matches = []
+    # Hot + scheduled + any with stream
+    for params in [
+        "is_hot=true&page_size=100",
+        "status=scheduled&page_size=100",
+        "status=live&page_size=50",
+        "page_size=50",
+    ]:
+        try:
+            data = fetch(f"{API_MATCHES}?{params}")
+            for m in data.get("results", []):
+                if m.get("id") not in {x["id"] for x in matches}:
+                    matches.append(m)
+        except Exception:
+            continue
+    # Prefer live > hot > scheduled
+    priority = {"live": 0, "scheduled": 1, "finished": 2}
+    matches.sort(key=lambda m: (priority.get(m.get("status"), 9), m.get("start_time") or ""))
+    return matches
+
+def generate_m3u(matches: list[dict]) -> str:
+    lines = [
+        "#EXTM3U",
+        "#EXT-X-SESSION-DATA:DATA-ID=\"com.khandai1.source\",VALUE=\"khandai1.link\"",
+        f"# Generated {datetime.now(TZ).isoformat()} | Auto-update from {API_MATCHES}",
+    ]
+    for m in matches:
+        primary = (m.get("primary_stream_url") or "").strip()
+        backup = (m.get("backup_stream_url") or "").strip()
+        stream = primary or backup
+        if not stream:
+            # Placeholder page when no live stream yet (player will fail gracefully)
+            stream = f"{API_BASE}/{m.get('slug') or m.get('id')}"
+        lines.append(build_extinf(m))
+        # Optional headers for some players
+        lines.append("#EXTVLCOPT:http-user-agent=" + USER_AGENT)
+        lines.append("#EXTVLCOPT:http-referrer=" + API_BASE + "/")
+        lines.append(stream)
+    return "\n".join(lines) + "\n"
+
+def main():
+    matches = collect_matches()
+    content = generate_m3u(matches)
+    OUTPUT.write_text(content, encoding="utf-8")
+    print(f"Wrote {OUTPUT} | {len(matches)} entries")
+    # Optional: also print first 20 lines for verification
+    print("--- preview ---")
+    print("\n".join(content.splitlines()[:25]))
+
+if __name__ == "__main__":
+    main()
