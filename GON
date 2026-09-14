@@ -1,3 +1,29 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="1" tvg-name="Japan W vs Thailand W" group-title="Bóng đá",Japan W vs Thailand W | Tiểu Mây | Asian Games Women
+https://luong.phaohoa.live/live/phaohoa9/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
+#EXTINF:-1 tvg-id="2" tvg-name="Dyn. Kyiv vs Epitsentr" group-title="Bóng đá",Dyn. Kyiv vs Epitsentr | Người Kiến | Premier League
+https://luong.phaohoa.live/live/phaohoa1/index.m3u8?expire=1815505159&sign=9137553faeae361734eec8bda5ea16e2
+#EXTINF:-1 tvg-id="3" tvg-name="Ukraine vs Bồ Đào Nha" group-title="Bóng chuyền",Ukraine vs Bồ Đào Nha | Chim Nhỏ | Vô Địch Châu Âu
+https://luong.phaohoa.live/live/phaohoa5/index.m3u8?expire=1815505159&sign=67cc5bcdcabb081229f5406e5b07483d
+#EXTINF:-1 tvg-id="4" tvg-name="Neftchi Fargona vs Al Quwa Al Jawiya" group-title="Bóng đá",Neftchi Fargona vs Al Quwa Al Jawiya | Văn Minh | AFC Champions League Elite
+https://luong.phaohoa.live/live/phaohoa3/index.m3u8?expire=1815505159&sign=32dbf97946c3646cdd7f664aebd7fa2a
+#EXTINF:-1 tvg-id="5" tvg-name="Đức vs Thụy Sĩ" group-title="Bóng chuyền",Đức vs Thụy Sĩ | Tày | Vô Địch Châu Âu
+https://luong.phaohoa.live/live/phaohoa8/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
+#EXTINF:-1 tvg-id="6" tvg-name="Slovakia vs Cộng Hoà Séc" group-title="Bóng chuyền",Slovakia vs Cộng Hoà Séc | Nhà Đài | Vô Địch Châu Âu
+https://luong.phaohoa.live/live/phaohoa10/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
+#EXTINF:-1 tvg-id="7" tvg-name="Shakhtar Donetsk vs Ch. Odesa" group-title="Bóng đá",Shakhtar Donetsk vs Ch. Odesa | Tiểu Mây | Premier League
+https://luong.phaohoa.live/live/phaohoa9/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
+#EXTINF:-1 tvg-id="8" tvg-name="Shabab Al-Ahli Dubai vs Tractor" group-title="Bóng đá",Shabab Al-Ahli Dubai vs Tractor | Tày | AFC Champions League Elite
+https://luong.phaohoa.live/live/phaohoa8/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
+
+
+
+
+
+
+
+
+
 # generate_m3u.py  –  chỉ lấy trận CÓ stream thật
 #!/usr/bin/env python3
 import json, urllib.request
