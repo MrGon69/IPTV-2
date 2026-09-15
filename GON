@@ -1,92 +1,10 @@
-#EXTM3U
-#EXTINF:-1 tvg-id="1" tvg-name="Japan W vs Thailand W" group-title="Bóng đá",Japan W vs Thailand W | Tiểu Mây | Asian Games Women
-https://luong.phaohoa.live/live/phaohoa9/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
-#EXTINF:-1 tvg-id="2" tvg-name="Dyn. Kyiv vs Epitsentr" group-title="Bóng đá",Dyn. Kyiv vs Epitsentr | Người Kiến | Premier League
-https://luong.phaohoa.live/live/phaohoa1/index.m3u8?expire=1815505159&sign=9137553faeae361734eec8bda5ea16e2
-#EXTINF:-1 tvg-id="3" tvg-name="Ukraine vs Bồ Đào Nha" group-title="Bóng chuyền",Ukraine vs Bồ Đào Nha | Chim Nhỏ | Vô Địch Châu Âu
-https://luong.phaohoa.live/live/phaohoa5/index.m3u8?expire=1815505159&sign=67cc5bcdcabb081229f5406e5b07483d
-#EXTINF:-1 tvg-id="4" tvg-name="Neftchi Fargona vs Al Quwa Al Jawiya" group-title="Bóng đá",Neftchi Fargona vs Al Quwa Al Jawiya | Văn Minh | AFC Champions League Elite
-https://luong.phaohoa.live/live/phaohoa3/index.m3u8?expire=1815505159&sign=32dbf97946c3646cdd7f664aebd7fa2a
-#EXTINF:-1 tvg-id="5" tvg-name="Đức vs Thụy Sĩ" group-title="Bóng chuyền",Đức vs Thụy Sĩ | Tày | Vô Địch Châu Âu
-https://luong.phaohoa.live/live/phaohoa8/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
-#EXTINF:-1 tvg-id="6" tvg-name="Slovakia vs Cộng Hoà Séc" group-title="Bóng chuyền",Slovakia vs Cộng Hoà Séc | Nhà Đài | Vô Địch Châu Âu
-https://luong.phaohoa.live/live/phaohoa10/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
-#EXTINF:-1 tvg-id="7" tvg-name="Shakhtar Donetsk vs Ch. Odesa" group-title="Bóng đá",Shakhtar Donetsk vs Ch. Odesa | Tiểu Mây | Premier League
-https://luong.phaohoa.live/live/phaohoa9/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
-#EXTINF:-1 tvg-id="8" tvg-name="Shabab Al-Ahli Dubai vs Tractor" group-title="Bóng đá",Shabab Al-Ahli Dubai vs Tractor | Tày | AFC Champions League Elite
-https://luong.phaohoa.live/live/phaohoa8/index.m3u8?expire=1815822079&sign=9a0c1792a57466ace2166ab62a2ea149
+#EXTM3U x-tvg-url="http://khandai1.link/epg.xml"
 
+#EXTINF:-1 tvg-id="khandai1" tvg-name="Khán Đài 1 - Live" tvg-logo="https://i.imgur.com/vH8Zz01.png" group-title="BÓNG ĐÁ TRỰC TIẾP",Trận 1: [LIVE] Match 01
+http://khandai1.link/live/stream1/playlist.m3u8
 
+#EXTINF:-1 tvg-id="khandai2" tvg-name="Khán Đài 2 - Live" tvg-logo="https://i.imgur.com/vH8Zz01.png" group-title="BÓNG ĐÁ TRỰC TIẾP",Trận 2: [LIVE] Match 02
+http://khandai1.link/live/stream2/playlist.m3u8
 
-
-
-
-
-
-
-# generate_m3u.py  –  chỉ lấy trận CÓ stream thật
-#!/usr/bin/env python3
-import json, urllib.request
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
-
-API_BASE = "https://khandai1.link"
-API_MATCHES = f"{API_BASE}/api/matches/"
-OUTPUT = Path("khandai1.m3u")
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
-TZ = timezone(timedelta(hours=7))
-
-def fetch(url: str) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=15) as r:
-        return json.loads(r.read().decode())
-
-def abs_logo(p: str | None) -> str:
-    if not p: return ""
-    return p if p.startswith("http") else f"{API_BASE}{p}"
-
-def format_time(iso: str) -> str:
-    try:
-        return datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(TZ).strftime("%H:%M %d/%m")
-    except: return ""
-
-def build_extinf(m: dict) -> str:
-    home = m.get("home_team_name") or "Home"
-    away = m.get("away_team_name") or "Away"
-    tour = m.get("tournament_name") or "Khác"
-    t = format_time(m.get("start_time") or "")
-    logo = abs_logo(m.get("home_team_logo") or m.get("away_team_logo"))
-    title = f"🔴 LIVE [{t}] {home} vs {away}" if m.get("status") == "live" else f"[{t}] {home} vs {away}"
-    return (f'#EXTINF:-1 tvg-id="{m.get("id")}" tvg-name="{title}" '
-            f'tvg-logo="{logo}" group-title="Khandai|{tour}",{title}')
-
-def collect() -> list:
-    seen, out = set(), []
-    for q in ["status=live&page_size=100", "is_hot=true&page_size=100", "page_size=100"]:
-        try:
-            data = fetch(f"{API_MATCHES}?{q}")
-            for m in data.get("results", []):
-                sid = m["id"]
-                stream = (m.get("primary_stream_url") or m.get("backup_stream_url") or "").strip()
-                if sid not in seen and stream and stream.startswith("http"):
-                    seen.add(sid)
-                    out.append(m)
-        except Exception:
-            continue
-    out.sort(key=lambda x: x.get("start_time") or "")
-    return out
-
-def main():
-    matches = collect()
-    lines = ["#EXTM3U", f"# {datetime.now(TZ).isoformat()} | only matches with real stream"]
-    for m in matches:
-        stream = (m.get("primary_stream_url") or m.get("backup_stream_url")).strip()
-        lines.append(build_extinf(m))
-        lines.append(f"#EXTVLCOPT:http-user-agent={UA}")
-        lines.append(f"#EXTVLCOPT:http-referrer={API_BASE}/")
-        lines.append(stream)
-    OUTPUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Wrote {OUTPUT} → {len(matches)} channels (only live/stream available)")
-
-if __name__ == "__main__":
-    main()
+#EXTINF:-1 tvg-id="khandai3" tvg-name="Khán Đài 3 - Live" tvg-logo="https://i.imgur.com/vH8Zz01.png" group-title="BÓNG ĐÁ TRỰC TIẾP",Trận 3: [LIVE] Match 03
+http://khandai1.link/live/stream3/playlist.m3u8
